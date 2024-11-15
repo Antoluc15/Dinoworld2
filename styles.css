@@ -1,0 +1,178 @@
+/* Reset de márgenes y relleno */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-image: url('hd-jurassic-park-movie-scene-ucyjkewbywehk7ij.jpg');
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    max-width: 1200px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Header */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.logo {
+    width: 100px;
+    height: auto;
+}
+
+/* Main Content */
+.content {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.content h1 {
+    font-size: 2.5rem;
+    color: #333;
+}
+
+.content p, .content a {
+    font-size: 1.2rem;
+    color: #444;
+    margin-top: 10px;
+}
+
+.content a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.content a:hover {
+    text-decoration: underline;
+}
+
+/* Sección de Administración */
+.admin-section {
+    background: #fcfcfc28;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.admin-section h2 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Formulario */
+#dinoForm {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+#dinoForm input, #dinoForm textarea, #dinoForm button {
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #5924bb;
+    border-radius: 5px;
+}
+
+#dinoForm textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+#dinoForm button {
+    background-color: #28a745;
+    color: rgb(233, 233, 233);
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+#dinoForm button:hover {
+    background-color: #218838;
+}
+
+/* Lista de Dinosaurios */
+#dinoList {
+    list-style: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+#dinoList li {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#dinoList li button {
+    margin-left: 10px;
+}
+
+#dinoList button {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+#dinoList button:nth-child(1) {
+    background-color: #007bff;
+    color: white;
+}
+
+#dinoList button:nth-child(1):hover {
+    background-color: #0056b3;
+}
+
+#dinoList button:nth-child(2) {
+    background-color: #dc3545;
+    color: white;
+}
+
+#dinoList button:nth-child(2):hover {
+    background-color: #c82333;
+}
+
+/* Footer */
+.footer {
+    background-color: #333;
+    color: #fff;
+    padding: 15px;
+    text-align: center;
+    border-radius: 0 0 10px 10px;
+    margin-top: auto;
+}

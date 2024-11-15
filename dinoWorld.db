@@ -1,0 +1,9 @@
+
+CREATE TABLE dinosaurios (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT NOT NULL,
+    especie TEXT NOT NULL,
+    periodo TEXT NOT NULL,
+    descripcion TEXT,
+    imagen TEXT
+);

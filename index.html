@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DinoWorld</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <img src="logo-JP.jpg" alt="Logo del sitio" class="logo">
+        </header>
+        
+        <!-- Main Content -->
+        <main class="content">
+            <h1>Bienvenidos a Jurassic World</h1>
+            <p>Aquí podrás encontrar un enlace de la pelea del Therizinosaurus y T.Rex vs Giganotosaurus</p>
+            <a href="https://youtu.be/Q_uFdzNteiY?si=zFS9p4UNcONHvIB6" target="_blank">Ver Video</a>
+        </main>
+        
+        <!-- Section de Administración -->
+        <section class="admin-section">
+            <h2>Administrar Dinosaurios</h2>
+            
+            <!-- Formulario para agregar o editar dinosaurios -->
+            <form id="dinoForm">
+                <input type="hidden" id="dinoId">
+                <input type="text" id="nombre" placeholder="Nombre" required>
+                <input type="text" id="especie" placeholder="Especie" required>
+                <input type="text" id="periodo" placeholder="Periodo" required>
+                <textarea id="descripcion" placeholder="Descripción"></textarea>
+                <input type="text" id="imagen" placeholder="URL de la imagen">
+                <button type="submit">Guardar</button>
+            </form>
+            
+            <!-- Lista de dinosaurios -->
+            <ul id="dinoList"></ul>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Curso: Conceptualización de servicios en la nube</p>
+            <p>Nombre: José Antonio Barrios Rodríguez</p>
+            <p>Código: 210719887</p>
+            <p>Correo: anto100.br@gmail.com</p>
+        </footer>
+    </div>
+
+   <script>
+    document.addEventListener("DOMContentLoaded", () => {
+    const dinoForm = document.getElementById("dinoForm");
+    const dinoList = document.getElementById("dinoList");
+    
+    function fetchDinosaurios() {
+        fetch("api.php")
+            .then(response => response.json())
+            .then(data => {
+                dinoList.innerHTML = "";
+                data.forEach(dino => {
+                    addDinoToList(dino);
+                });
+            })
+            .catch(error => console.error("Error al obtener dinosaurios:", error));
+    }
+
+    function addDinoToList(dino) {
+        const li = document.createElement("li");
+        li.innerHTML = `${dino.nombre} - ${dino.especie} (${dino.periodo}) 
+                        <button onclick="editDino(${dino.id})">Editar</button> 
+                        <button onclick="deleteDino(${dino.id})">Eliminar</button>`;
+        dinoList.appendChild(li);
+    }
+
+    dinoForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const id = document.getElementById("dinoId").value;
+        const method = id ? "PUT" : "POST";
+        const url = id ? `api.php?id=${id}` : "api.php";
+        
+        const dinoData = {
+            nombre: document.getElementById("nombre").value,
+            especie: document.getElementById("especie").value,
+            periodo: document.getElementById("periodo").value,
+            descripcion: document.getElementById("descripcion").value,
+            imagen: document.getElementById("imagen").value
+        };
+
+        console.log("Datos enviados:", dinoData);
+        
+        fetch(url, {
+            method,
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(dinoData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Respuesta del servidor:", data);
+            dinoForm.reset();
+            if (method === "POST") {
+                addDinoToList(data);
+            } else {
+                fetchDinosaurios();
+            }
+        })
+        .catch(error => console.error("Error al guardar el dinosaurio:", error));
+    });
+
+    window.editDino = (id) => {
+        fetch(`api.php?id=${id}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("dinoId").value = data.id;
+                document.getElementById("nombre").value = data.nombre;
+                document.getElementById("especie").value = data.especie;
+                document.getElementById("periodo").value = data.periodo;
+                document.getElementById("descripcion").value = data.descripcion;
+                document.getElementById("imagen").value = data.imagen;
+            })
+            .catch(error => console.error("Error al editar dinosaurio:", error));
+    };
+
+    window.deleteDino = (id) => {
+        fetch(`api.php?id=${id}`, {method: "DELETE"})
+            .then(() => fetchDinosaurios())
+            .catch(error => console.error("Error al eliminar dinosaurio:", error));
+    };
+
+    fetchDinosaurios();
+});
+
+   </script>
+    
+</body>
+</html>
