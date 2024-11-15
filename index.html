@@ -49,22 +49,25 @@
     </div>
 
    <script>
-   document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", () => {
     const dinoForm = document.getElementById("dinoForm");
     const dinoList = document.getElementById("dinoList");
-    
+
+    // Función para cargar todos los dinosaurios
     function fetchDinosaurios() {
         fetch("api.php")
             .then(response => response.json())
             .then(data => {
-                dinoList.innerHTML = ""; // Limpia la lista antes de cargar
-                data.forEach(dino => addDinoToList(dino));
+                dinoList.innerHTML = "";
+                data.forEach(dino => {
+                    addDinoToList(dino);
+                });
             })
             .catch(error => console.error("Error al obtener dinosaurios:", error));
     }
 
+    // Función para agregar un dinosaurio a la lista
     function addDinoToList(dino) {
-        console.log("Agregando dinosaurio a la lista:", dino);
         const li = document.createElement("li");
         li.innerHTML = `${dino.nombre} - ${dino.especie} (${dino.periodo}) 
                         <button onclick="editDino(${dino.id})">Editar</button> 
@@ -72,8 +75,10 @@
         dinoList.appendChild(li);
     }
 
+    // Enviar el formulario para agregar o editar un dinosaurio
     dinoForm.addEventListener("submit", (e) => {
         e.preventDefault();
+
         const id = document.getElementById("dinoId").value;
         const method = id ? "PUT" : "POST";
         const url = id ? `api.php?id=${id}` : "api.php";
@@ -87,7 +92,7 @@
         };
 
         console.log("Datos enviados:", dinoData);
-        
+
         fetch(url, {
             method,
             headers: {"Content-Type": "application/json"},
@@ -95,18 +100,40 @@
         })
         .then(response => response.json())
         .then(data => {
-            console.log("Respuesta del servidor al guardar:", data);
+            console.log("Respuesta del servidor:", data);
             dinoForm.reset();
             if (method === "POST") {
-                addDinoToList(data); // Agrega el dinosaurio recién guardado
+                addDinoToList(data);
             } else {
-                fetchDinosaurios(); // Recarga la lista si se trata de una edición
+                fetchDinosaurios();
             }
         })
         .catch(error => console.error("Error al guardar el dinosaurio:", error));
     });
 
-    // Cargar todos los dinosaurios al iniciar
+    // Función para editar un dinosaurio
+    window.editDino = (id) => {
+        fetch(`api.php?id=${id}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("dinoId").value = data.id;
+                document.getElementById("nombre").value = data.nombre;
+                document.getElementById("especie").value = data.especie;
+                document.getElementById("periodo").value = data.periodo;
+                document.getElementById("descripcion").value = data.descripcion;
+                document.getElementById("imagen").value = data.imagen;
+            })
+            .catch(error => console.error("Error al editar dinosaurio:", error));
+    };
+
+    // Función para eliminar un dinosaurio
+    window.deleteDino = (id) => {
+        fetch(`api.php?id=${id}`, {method: "DELETE"})
+            .then(() => fetchDinosaurios())
+            .catch(error => console.error("Error al eliminar dinosaurio:", error));
+    };
+
+    // Cargar los dinosaurios al cargar la página
     fetchDinosaurios();
 });
 
