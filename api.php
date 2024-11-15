@@ -28,6 +28,7 @@ switch($method) {
         $stmt->execute([$data['nombre'], $data['especie'], $data['periodo'], $data['descripcion'], $data['imagen']]);
         echo json_encode(["id" => $db->lastInsertId()]);
         break;
+
         
     case 'PUT':
         $id = $_GET['id'];
