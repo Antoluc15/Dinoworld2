@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DinoWorld</title>
+    <title>DinoWorld - Administrar Dinosaurios</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -12,19 +12,18 @@
         <header class="header">
             <img src="logo-JP.jpg" alt="Logo del sitio" class="logo">
         </header>
-        
+
         <!-- Main Content -->
         <main class="content">
-            <h1>Bienvenidos a Jurassic World</h1>
-            <p>Aquí podrás encontrar un enlace de la pelea del Therizinosaurus y T.Rex vs Giganotosaurus</p>
-            <a href="https://youtu.be/Q_uFdzNteiY?si=zFS9p4UNcONHvIB6" target="_blank">Ver Video</a>
+            <h1>Bienvenidos a DinoWorld</h1>
+            <p>Aquí podrás administrar tu colección de dinosaurios.</p>
         </main>
-        
-        <!-- Sección de Administración -->
+
+        <!-- Section de Administración -->
         <section class="admin-section">
-            <h2>Administrar Dinosaurios</h2>
-            
-            <!-- Formulario para agregar o editar dinosaurios -->
+            <h2>Agregar o Editar Dinosaurios</h2>
+
+            <!-- Formulario -->
             <form id="dinoForm">
                 <input type="hidden" id="dinoId">
                 <input type="text" id="nombre" name="nombre" placeholder="Nombre" required>
@@ -34,8 +33,9 @@
                 <input type="text" id="imagen" name="imagen" placeholder="URL de la imagen">
                 <button type="submit">Guardar</button>
             </form>
-            
-            <!-- Lista de dinosaurios -->
+
+            <h2>Lista de Dinosaurios</h2>
+            <!-- Lista -->
             <ul id="dinoList"></ul>
         </section>
 
@@ -49,25 +49,17 @@
     </div>
 
     <script>
+        // Elementos del DOM
         const dinoForm = document.getElementById('dinoForm');
         const dinoList = document.getElementById('dinoList');
 
-        // Función para obtener y renderizar la lista de dinosaurios
-        function fetchAndRenderDinos() {
-            fetch('/api.php')
+        // Función para obtener los dinosaurios de la API
+        function fetchDinos() {
+            fetch('api.php')
                 .then(response => response.json())
                 .then(data => {
-                    dinoList.innerHTML = ''; // Limpiar la lista actual
-                    data.forEach(dino => {
-                        const li = document.createElement('li');
-                        li.innerHTML = `
-                            <strong>${dino.nombre}</strong> (${dino.especie}) - ${dino.periodo}
-                            <p>${dino.descripcion}</p>
-                            <img src="${dino.imagen}" alt="${dino.nombre}" width="150">
-                            <button onclick="deleteDino(${dino.id})">Eliminar</button>
-                        `;
-                        dinoList.appendChild(li);
-                    });
+                    dinoList.innerHTML = ''; // Limpiar la lista
+                    data.forEach(dino => addDinoToList(dino)); // Agregar cada dinosaurio a la lista
                 })
                 .catch(error => console.error('Error al obtener dinosaurios:', error));
         }
@@ -76,42 +68,73 @@
         function handleFormSubmit(event) {
             event.preventDefault();
 
-            const formData = new FormData(dinoForm);
-            const data = {
-                nombre: formData.get('nombre'),
-                especie: formData.get('especie'),
-                periodo: formData.get('periodo'),
-                descripcion: formData.get('descripcion'),
-                imagen: formData.get('imagen')
+            const id = document.getElementById('dinoId').value;
+            const formData = {
+                nombre: document.getElementById('nombre').value,
+                especie: document.getElementById('especie').value,
+                periodo: document.getElementById('periodo').value,
+                descripcion: document.getElementById('descripcion').value,
+                imagen: document.getElementById('imagen').value
             };
 
-            fetch('/api.php', {
-                method: 'POST',
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `api.php?id=${id}` : 'api.php';
+
+            fetch(url, {
+                method: method,
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(formData)
             })
-            .then(response => response.json())
-            .then(() => {
-                dinoForm.reset(); // Limpiar el formulario
-                fetchAndRenderDinos(); // Actualizar la lista de dinosaurios
-            })
-            .catch(error => console.error('Error al guardar dinosaurio:', error));
+                .then(response => response.json())
+                .then(data => {
+                    fetchDinos(); // Actualizar la lista
+                    dinoForm.reset(); // Limpiar el formulario
+                })
+                .catch(error => console.error('Error al guardar dinosaurio:', error));
+        }
+
+        // Función para agregar un dinosaurio a la lista
+        function addDinoToList(dino) {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <strong>${dino.nombre}</strong> (${dino.especie}) - ${dino.periodo}
+                <button onclick="editDino(${dino.id})">Editar</button>
+                <button onclick="deleteDino(${dino.id})">Eliminar</button>
+            `;
+            dinoList.appendChild(li);
+        }
+
+        // Función para cargar un dinosaurio en el formulario para editar
+        function editDino(id) {
+            fetch(`api.php?id=${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('dinoId').value = data.id;
+                    document.getElementById('nombre').value = data.nombre;
+                    document.getElementById('especie').value = data.especie;
+                    document.getElementById('periodo').value = data.periodo;
+                    document.getElementById('descripcion').value = data.descripcion;
+                    document.getElementById('imagen').value = data.imagen;
+                })
+                .catch(error => console.error('Error al cargar dinosaurio:', error));
         }
 
         // Función para eliminar un dinosaurio
         function deleteDino(id) {
-            fetch(`/api.php?id=${id}`, { method: 'DELETE' })
-                .then(() => fetchAndRenderDinos())
+            fetch(`api.php?id=${id}`, { method: 'DELETE' })
+                .then(response => response.json())
+                .then(data => fetchDinos()) // Actualizar la lista
                 .catch(error => console.error('Error al eliminar dinosaurio:', error));
         }
 
-        // Cargar la lista de dinosaurios al cargar la página
-        document.addEventListener('DOMContentLoaded', fetchAndRenderDinos);
+        // Inicializar la lista al cargar la página
+        document.addEventListener('DOMContentLoaded', fetchDinos);
 
-        // Agregar el evento de submit al formulario
+        // Manejar el evento de envío del formulario
         dinoForm.addEventListener('submit', handleFormSubmit);
     </script>
 </body>
 </html>
+
