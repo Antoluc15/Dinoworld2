@@ -103,14 +103,14 @@ $method = $_SERVER['REQUEST_METHOD'];
 // Manejar la solicitud según el método
 switch ($method) {
     case 'GET':
-        // Si se proporciona un ID, devolver solo un dinosaurio, de lo contrario, devolver todos
-        if (isset($_GET['id'])) {
-            $id = $_GET['id'];
-            echo json_encode(getDinos($id));
-        } else {
-            echo json_encode(getDinos());
-        }
-        break;
+    if (isset($_GET['id'])) {
+        $id = $_GET['id'];
+        echo json_encode(getDinos($id));
+    } else {
+        echo json_encode(getDinos());
+    }
+    break;
+
 
     case 'POST':
         // Obtener los datos JSON enviados
