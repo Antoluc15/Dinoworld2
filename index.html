@@ -20,18 +20,18 @@
             <a href="https://youtu.be/Q_uFdzNteiY?si=zFS9p4UNcONHvIB6" target="_blank">Ver Video</a>
         </main>
         
-        <!-- Section de Administración -->
+        <!-- Sección de Administración -->
         <section class="admin-section">
             <h2>Administrar Dinosaurios</h2>
             
             <!-- Formulario para agregar o editar dinosaurios -->
             <form id="dinoForm">
                 <input type="hidden" id="dinoId">
-                <input type="text" id="nombre" placeholder="Nombre" required>
-                <input type="text" id="especie" placeholder="Especie" required>
-                <input type="text" id="periodo" placeholder="Periodo" required>
-                <textarea id="descripcion" placeholder="Descripción"></textarea>
-                <input type="text" id="imagen" placeholder="URL de la imagen">
+                <input type="text" id="nombre" name="nombre" placeholder="Nombre" required>
+                <input type="text" id="especie" name="especie" placeholder="Especie" required>
+                <input type="text" id="periodo" name="periodo" placeholder="Periodo" required>
+                <textarea id="descripcion" name="descripcion" placeholder="Descripción"></textarea>
+                <input type="text" id="imagen" name="imagen" placeholder="URL de la imagen">
                 <button type="submit">Guardar</button>
             </form>
             
@@ -48,70 +48,70 @@
         </footer>
     </div>
 
-   <script>
-   const dinoForm = document.getElementById('dinoForm');
-const dinoList = document.getElementById('dinoList');
+    <script>
+        const dinoForm = document.getElementById('dinoForm');
+        const dinoList = document.getElementById('dinoList');
 
-// Función para manejar el envío del formulario
-function handleFormSubmit(event) {
-    event.preventDefault();
+        // Función para obtener y renderizar la lista de dinosaurios
+        function fetchAndRenderDinos() {
+            fetch('/api.php')
+                .then(response => response.json())
+                .then(data => {
+                    dinoList.innerHTML = ''; // Limpiar la lista actual
+                    data.forEach(dino => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <strong>${dino.nombre}</strong> (${dino.especie}) - ${dino.periodo}
+                            <p>${dino.descripcion}</p>
+                            <img src="${dino.imagen}" alt="${dino.nombre}" width="150">
+                            <button onclick="deleteDino(${dino.id})">Eliminar</button>
+                        `;
+                        dinoList.appendChild(li);
+                    });
+                })
+                .catch(error => console.error('Error al obtener dinosaurios:', error));
+        }
 
-    // Obtener los datos del formulario
-    const formData = new FormData(dinoForm);
-    const data = {
-        nombre: formData.get('nombre'),
-        especie: formData.get('especie'),
-        periodo: formData.get('periodo'),
-        descripcion: formData.get('descripcion'),
-        imagen: formData.get('imagen')
-    };
+        // Función para manejar el envío del formulario
+        function handleFormSubmit(event) {
+            event.preventDefault();
 
-    // Enviar los datos al backend usando fetch
-    fetch('/api.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log("Respuesta del servidor:", data);
-        // Llamar a la función para agregar el dinosaurio a la lista
-        addDinoToList(data);
-        dinoForm.reset(); // Limpiar el formulario
-    })
-    .catch(error => console.error('Error al guardar dinosaurio:', error));
-}
+            const formData = new FormData(dinoForm);
+            const data = {
+                nombre: formData.get('nombre'),
+                especie: formData.get('especie'),
+                periodo: formData.get('periodo'),
+                descripcion: formData.get('descripcion'),
+                imagen: formData.get('imagen')
+            };
 
-// Función para agregar el dinosaurio a la lista
-function addDinoToList(dino) {
-    const li = document.createElement('li');
-    li.innerHTML = `
-        <span>${dino.nombre} - ${dino.especie}</span>
-        <button onclick="editDino(${dino.id})">Editar</button>
-        <button onclick="deleteDino(${dino.id})">Eliminar</button>
-    `;
-    dinoList.appendChild(li);
-}
+            fetch('/api.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(() => {
+                dinoForm.reset(); // Limpiar el formulario
+                fetchAndRenderDinos(); // Actualizar la lista de dinosaurios
+            })
+            .catch(error => console.error('Error al guardar dinosaurio:', error));
+        }
 
-// Función para editar un dinosaurio
-function editDino(id) {
-    // Lógica para editar el dinosaurio
-    console.log('Editar dinosaurio con ID:', id);
-}
+        // Función para eliminar un dinosaurio
+        function deleteDino(id) {
+            fetch(`/api.php?id=${id}`, { method: 'DELETE' })
+                .then(() => fetchAndRenderDinos())
+                .catch(error => console.error('Error al eliminar dinosaurio:', error));
+        }
 
-// Función para eliminar un dinosaurio
-function deleteDino(id) {
-    // Lógica para eliminar el dinosaurio
-    console.log('Eliminar dinosaurio con ID:', id);
-}
+        // Cargar la lista de dinosaurios al cargar la página
+        document.addEventListener('DOMContentLoaded', fetchAndRenderDinos);
 
-// Agregar el evento de submit al formulario
-dinoForm.addEventListener('submit', handleFormSubmit);
-
-
-   </script>
-    
+        // Agregar el evento de submit al formulario
+        dinoForm.addEventListener('submit', handleFormSubmit);
+    </script>
 </body>
 </html>
