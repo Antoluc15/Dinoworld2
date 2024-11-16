@@ -1,168 +1,110 @@
 <?php
+// Habilitar errores para depuración (elimina en producción)
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Configuración de cabeceras para CORS (si es necesario)
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
-header("Content-Type: application/json");
 
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-
+// Conexión a la base de datos
+$host = '127.0.0.1';
+$dbname = 'tu_base_de_datos';
+$user = 'tu_usuario';
+$password = 'tu_contraseña';
 
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $user, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
-    echo "Error de conexión: " . $e->getMessage();
+    http_response_code(500);
+    echo json_encode(['error' => 'Error al conectar con la base de datos: ' . $e->getMessage()]);
     exit;
 }
 
-// Encabezado para permitir solicitudes CORS
-header('Content-Type: application/json');
-
-// Función para manejar el método POST (agregar dinosaurio)
-function addDino($data) {
-    global $pdo;
-
-    $sql = "INSERT INTO dinosaurios (nombre, especie, periodo, descripcion, imagen) 
-            VALUES (:nombre, :especie, :periodo, :descripcion, :imagen)";
-
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindParam(':nombre', $data['nombre']);
-    $stmt->bindParam(':especie', $data['especie']);
-    $stmt->bindParam(':periodo', $data['periodo']);
-    $stmt->bindParam(':descripcion', $data['descripcion']);
-    $stmt->bindParam(':imagen', $data['imagen']);
-
-    if ($stmt->execute()) {
-        $data['id'] = $pdo->lastInsertId(); // Obtener el ID del dinosaurio recién insertado
-        return $data;
-    } else {
-        return false;
-    }
-}
-
-// Función para manejar el método GET (obtener todos los dinosaurios o uno solo)
-function getDinos($id = null) {
-    global $pdo;
-
-    if ($id) {
-        $stmt = $pdo->prepare("SELECT * FROM dinosaurios WHERE id = :id");
-        $stmt->bindParam(':id', $id);
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    } else {
-        $stmt = $pdo->query("SELECT * FROM dinosaurios");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-}
-
-// Función para manejar el método PUT (editar dinosaurio)
-function editDino($id, $data) {
-    global $pdo;
-
-    $sql = "UPDATE dinosaurios SET 
-                nombre = :nombre, 
-                especie = :especie, 
-                periodo = :periodo, 
-                descripcion = :descripcion, 
-                imagen = :imagen 
-            WHERE id = :id";
-
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindParam(':nombre', $data['nombre']);
-    $stmt->bindParam(':especie', $data['especie']);
-    $stmt->bindParam(':periodo', $data['periodo']);
-    $stmt->bindParam(':descripcion', $data['descripcion']);
-    $stmt->bindParam(':imagen', $data['imagen']);
-    $stmt->bindParam(':id', $id);
-
-    if ($stmt->execute()) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-// Función para manejar el método DELETE (eliminar dinosaurio)
-function deleteDino($id) {
-    global $pdo;
-
-    $stmt = $pdo->prepare("DELETE FROM dinosaurios WHERE id = :id");
-    $stmt->bindParam(':id', $id);
-
-    if ($stmt->execute()) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-// Obtener el método HTTP actual
+// Detectar el método HTTP
 $method = $_SERVER['REQUEST_METHOD'];
 
-// Manejar la solicitud según el método
+// Manejo de rutas y lógica de API
 switch ($method) {
     case 'GET':
-    if (isset($_GET['id'])) {
-        $id = $_GET['id'];
-        echo json_encode(getDinos($id));
-    } else {
-        echo json_encode(getDinos());
-    }
-    break;
-
+        if (isset($_GET['id'])) {
+            // Consultar un dinosaurio por ID
+            $stmt = $pdo->prepare("SELECT * FROM dinosaurios WHERE id = ?");
+            $stmt->execute([$_GET['id']]);
+            $dinosaurio = $stmt->fetch(PDO::FETCH_ASSOC);
+            echo json_encode($dinosaurio);
+        } else {
+            // Consultar todos los dinosaurios
+            $stmt = $pdo->query("SELECT * FROM dinosaurios");
+            $dinosaurios = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            echo json_encode($dinosaurios);
+        }
+        break;
 
     case 'POST':
-        // Obtener los datos JSON enviados
-        $data = json_decode(file_get_contents("php://input"), true);
-
-        // Agregar el dinosaurio
-        $result = addDino($data);
-        if ($result) {
-            echo json_encode($result);
+        // Crear un nuevo dinosaurio
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (!empty($data['nombre']) && !empty($data['especie']) && !empty($data['periodo'])) {
+            $stmt = $pdo->prepare("INSERT INTO dinosaurios (nombre, especie, periodo, descripcion, imagen) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([
+                $data['nombre'],
+                $data['especie'],
+                $data['periodo'],
+                $data['descripcion'] ?? '',
+                $data['imagen'] ?? ''
+            ]);
+            echo json_encode(['success' => true]);
         } else {
-            echo json_encode(['error' => 'Error al agregar dinosaurio.']);
+            http_response_code(400);
+            echo json_encode(['error' => 'Datos incompletos']);
         }
         break;
 
     case 'PUT':
-        // Obtener el ID y los datos JSON enviados
-        if (isset($_GET['id'])) {
-            $id = $_GET['id'];
-            $data = json_decode(file_get_contents("php://input"), true);
-
-            // Editar el dinosaurio
-            $result = editDino($id, $data);
-            if ($result) {
-                echo json_encode(['message' => 'Dinosaurio actualizado correctamente.']);
-            } else {
-                echo json_encode(['error' => 'Error al actualizar dinosaurio.']);
-            }
+        // Actualizar un dinosaurio existente
+        parse_str(file_get_contents('php://input'), $data);
+        if (!empty($data['id']) && !empty($data['nombre']) && !empty($data['especie']) && !empty($data['periodo'])) {
+            $stmt = $pdo->prepare("UPDATE dinosaurios SET nombre = ?, especie = ?, periodo = ?, descripcion = ?, imagen = ? WHERE id = ?");
+            $stmt->execute([
+                $data['nombre'],
+                $data['especie'],
+                $data['periodo'],
+                $data['descripcion'] ?? '',
+                $data['imagen'] ?? '',
+                $data['id']
+            ]);
+            echo json_encode(['success' => true]);
         } else {
-            echo json_encode(['error' => 'ID de dinosaurio no especificado.']);
+            http_response_code(400);
+            echo json_encode(['error' => 'Datos incompletos']);
         }
         break;
 
     case 'DELETE':
-        // Obtener el ID
-        if (isset($_GET['id'])) {
-            $id = $_GET['id'];
-
-            // Eliminar el dinosaurio
-            $result = deleteDino($id);
-            if ($result) {
-                echo json_encode(['message' => 'Dinosaurio eliminado correctamente.']);
-            } else {
-                echo json_encode(['error' => 'Error al eliminar dinosaurio.']);
-            }
+        // Eliminar un dinosaurio por ID
+        parse_str(file_get_contents('php://input'), $data);
+        if (!empty($data['id'])) {
+            $stmt = $pdo->prepare("DELETE FROM dinosaurios WHERE id = ?");
+            $stmt->execute([$data['id']]);
+            echo json_encode(['success' => true]);
         } else {
-            echo json_encode(['error' => 'ID de dinosaurio no especificado.']);
+            http_response_code(400);
+            echo json_encode(['error' => 'ID no proporcionado']);
         }
         break;
 
+    case 'OPTIONS':
+        // Manejo de preflight para CORS
+        http_response_code(200);
+        break;
+
     default:
-        echo json_encode(['error' => 'Método HTTP no permitido.']);
+        // Método no soportado
+        http_response_code(405);
+        echo json_encode(['error' => 'Método no permitido']);
         break;
 }
 ?>
-
